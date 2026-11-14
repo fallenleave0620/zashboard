@@ -71,7 +71,7 @@ export const initSatistic = () => {
   let memoryWsClose: (() => void) | undefined
   let unwatchMemory: (() => void) | undefined
 
-  // sing-box 的 Clash 兼容 API 没有 /memory 流，硬订阅只会让 WS 无限重连。
+  // 内存：mihomo/honk 走 Clash WS /memory，sing-box 走 GET /memory 轮询（driver 里分流）。
   if (can('memoryStats')) {
     const { data: memoryWsData, close } = memoryStream()
     memoryWsClose = close

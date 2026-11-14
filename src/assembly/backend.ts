@@ -101,8 +101,8 @@ const clashCaps = computed<Caps>(() => {
     extraLogLevels: singbox,
     silentLogLevel: mihomo,
 
-    // 内存占用依赖 Clash WS /memory；sing-box 没有这个流。
-    memoryStats: mihomo || honk || isForkCoreOverride.value,
+    // 内存占用：mihomo/honk 走 Clash WS /memory；sing-box 用 GET /memory 轮询。
+    memoryStats: mihomo || honk || singbox || isForkCoreOverride.value,
 
     runtimeStats: honk,
 

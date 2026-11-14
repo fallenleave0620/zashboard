@@ -7,7 +7,7 @@
       <span class="mx-1">|</span>
       <BackendVersion />
       <button
-        class="btn btn-circle btn-sm absolute top-2 right-2"
+        class="btn btn-circle btn-sm absolute top-[calc(0.5rem+var(--np-safe-top,0px))] right-[calc(0.5rem+var(--np-safe-right,0px))]"
         @click="showCardSettingsDialog = true"
       >
         <Cog6ToothIcon class="h-4 w-4" />

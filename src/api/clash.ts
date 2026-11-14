@@ -12,6 +12,7 @@ import type {
   Rule,
   RuleProvider,
 } from '@/types'
+import type { MemorySample } from '@/assembly/driver/types'
 import axios from 'axios'
 import { debounce } from 'lodash'
 import ReconnectingWebSocket from 'reconnectingwebsocket'
@@ -19,6 +20,9 @@ import { shallowRef } from 'vue'
 import './http'
 
 export const fetchClashVersion = () => axios.get<{ version: string }>('/version')
+
+// sing-box 只提供一次性 GET /memory（{"inuse":…,"oslimit":…}），没有 Clash Meta 那样的 WS 流。
+export const fetchClashMemoryAPI = () => axios.get<MemorySample>('/memory')
 
 export const fetchProxiesAPI = () => {
   return axios.get<{ proxies: Record<string, Proxy> }>('/proxies')

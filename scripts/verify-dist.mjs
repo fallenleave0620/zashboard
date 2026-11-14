@@ -94,6 +94,10 @@ const cssMarkers = [
   // class 属性会被空格切断，规则根本不会生成，顶栏就又被状态栏压住。
   ['安全区顶栏 padding', 'padding-top:var(--np-safe-top'],
   ['安全区底部 padding', 'padding-bottom:var(--np-safe-bottom'],
+  // 概览页的设置按钮是 absolute 定位在 CtrlsBar 里的，必须自己加安全区偏移，
+  // 否则会钻到状态栏下面（KSU WebUI 是 edge-to-edge）。
+  ['设置按钮安全区 top', 'calc(.5rem + var(--np-safe-top'],
+  ['设置按钮安全区 right', 'calc(.5rem + var(--np-safe-right'],
 ]
 
 for (const [label, marker] of cssMarkers) {

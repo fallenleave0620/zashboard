@@ -5,6 +5,7 @@ import {
   deleteStorageAPI,
   disconnectAllClashAPI,
   disconnectClashByIdAPI,
+  fetchClashMemoryAPI,
   fetchClashVersion,
   fetchHonkStatsAPI,
   fetchProxiesAPI,
@@ -37,6 +38,7 @@ import {
   upgradeCoreAPI,
   upgradeUIAPI,
 } from '@/api/clash'
+import { core, Core } from '@/assembly/backend'
 import { proxyMap } from '@/assembly/proxies/state'
 import { PROXY_TYPE } from '@/constant'
 import type { ClashConnectionRawMessage, Connection, Log } from '@/types'
@@ -52,6 +54,33 @@ import type {
 } from './types'
 
 const done = (request: Promise<unknown>): Promise<void> => request.then(() => undefined)
+
+const POLL_INTERVAL = 1000
+
+/** 轮询型 Stream（sing-box 的 /memory 只有一次性 GET，没有 WS 流）。 */
+const poll = <T>(request: () => Promise<T>, interval = POLL_INTERVAL): Stream<T> => {
+  const data = shallowRef<T>()
+  let stopped = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const tick = async () => {
+    try {
+      const next = await request()
+      if (!stopped) data.value = next
+    } catch {}
+    if (!stopped) timer = setTimeout(tick, interval)
+  }
+
+  tick()
+
+  return {
+    data,
+    close: () => {
+      stopped = true
+      clearTimeout(timer)
+    },
+  }
+}
 
 const asClash = (connection: Connection) => connection as ClashConnectionRawMessage
 
@@ -168,7 +197,14 @@ export const clashDriver: Driver = {
 
   metrics: {
     traffic: () => createClashWebSocket<TrafficSample>('traffic'),
-    memory: () => createClashWebSocket<MemorySample>('memory'),
+    memory: () => {
+      // sing-box 的 Clash 兼容 API 只有 GET /memory 快照，没有 /memory 的 WS 流
+      if (core.value === Core.Singbox) {
+        return poll(async () => (await fetchClashMemoryAPI()).data)
+      }
+
+      return createClashWebSocket<MemorySample>('memory')
+    },
     fetchRuntimeStats: async () => (await fetchHonkStatsAPI()).data,
   },
 
