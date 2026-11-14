@@ -1,6 +1,6 @@
-# NetProxy 集成补丁说明（sing-box Clash 兼容 + KSU 安全区）
+# 集成补丁说明（sing-box Clash 兼容 + KSU 安全区）
 
-本 fork 在 v3.30.0 基础上做了两类改动，供 NetProxy Magisk 模块的 WebUI 使用。
+本 fork 在 v3.30.0 基础上做了两类改动，供 NetProxy Magisk 模块的 WebUI 使用（仅此文档保留模块相关说明）。
 改动以 commit 形式保存在 `main` 上，模块侧可直接 clone 本仓库构建面板。
 
 ## 1. 恢复 sing-box 的 Clash 兼容支持

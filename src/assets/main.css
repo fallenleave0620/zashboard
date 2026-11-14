@@ -14,7 +14,7 @@
 @import './styles/utilities/appearance.css';
 @import './styles/utilities/motion.css';
 
-/* NetProxy 模块 WebUI：KSU / MMRL 通过 https://mui.kernelsu.org/internal/insets.css
+/* 模块 WebUI（KSU / MMRL）通过 https://mui.kernelsu.org/internal/insets.css
    注入 --safe-area-inset-*；浏览器里退回 env()，两边都取非零的一侧。
    - :root 与 body 都声明一次：宿主要是把变量注入到 body，:root 上算出来的值会漏掉；
      两个选择器都声明后谁有值都能吃到。
