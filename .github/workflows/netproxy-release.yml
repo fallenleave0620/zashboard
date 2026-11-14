@@ -75,6 +75,18 @@ jobs:
             ${{ steps.pack.outputs.name }}.sha256
           if-no-files-found: error
 
+      - name: Clean previous assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set +e
+          gh release view "$TAG" --json assets -q '.assets[].name' 2>/dev/null |
+            while read -r name; do
+              [ -n "$name" ] && gh release delete-asset "$TAG" "$name" -y >/dev/null 2>&1
+            done
+          exit 0
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
