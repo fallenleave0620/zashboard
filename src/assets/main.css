@@ -13,3 +13,19 @@
 
 @import './styles/utilities/appearance.css';
 @import './styles/utilities/motion.css';
+
+/* NetProxy 模块 WebUI：KSU / MMRL 通过 https://mui.kernelsu.org/internal/insets.css
+   注入 --safe-area-inset-*；浏览器里退回 env()，两边都取非零的一侧。
+   - :root 与 body 都声明一次：宿主要是把变量注入到 body，:root 上算出来的值会漏掉；
+     两个选择器都声明后谁有值都能吃到。
+   - 必须写在所有 @import 之后 —— CSS 规范要求 @import 先于任何规则，
+     否则 Tailwind / daisyUI 整份样式会被丢弃（页面会错位、尺寸全错）。
+   - 用到这些变量的 Tailwind 任意值类不能带空格（pt-[var(--np-safe-top,0px)]），
+     否则 class 属性会被空格切断，规则不会生成。 */
+:root,
+body {
+  --np-safe-top: max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
+  --np-safe-right: max(var(--safe-area-inset-right, 0px), env(safe-area-inset-right, 0px));
+  --np-safe-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
+  --np-safe-left: max(var(--safe-area-inset-left, 0px), env(safe-area-inset-left, 0px));
+}

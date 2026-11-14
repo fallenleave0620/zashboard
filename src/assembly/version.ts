@@ -1,6 +1,7 @@
 import DaeLogo from '@/assets/images/dae.jpg'
 import HonkLogo from '@/assets/images/honk.svg'
 import MetacubexLogo from '@/assets/images/metacubex.jpg'
+import SingBoxLogo from '@/assets/images/sing-box.svg'
 import { MIHOMO, MIHOMO_CHANNEL } from '@/constant'
 import { fetchWithLocalCache } from '@/helper/cache'
 import { getRequestErrorMessage } from '@/helper/request-error'
@@ -30,6 +31,8 @@ const detectCore = (versionString: string): Core => {
   if (/\bhonk\b/i.test(versionString)) return Core.Honk
   if (activeBackend.value?.type === 'dae') return Core.Dae
   if (!versionString) return Core.Unknown
+  // sing-box 的 /version 形如 "sing-box 1.13.0"，据此区分 Clash 兼容通道的内核品牌。
+  if (/sing-?box/i.test(versionString)) return Core.Singbox
   return Core.Mihomo
 }
 
@@ -39,6 +42,8 @@ export const coreBrand = computed(() => {
       return { logo: HonkLogo, url: 'https://github.com/Glassyiris/honk' }
     case Core.Dae:
       return { logo: DaeLogo, url: 'https://github.com/daeuniverse/dae' }
+    case Core.Singbox:
+      return { logo: SingBoxLogo, url: 'https://github.com/SagerNet/sing-box' }
     default:
       return {
         logo: MetacubexLogo,

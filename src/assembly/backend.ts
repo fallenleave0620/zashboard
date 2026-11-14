@@ -6,6 +6,8 @@ import { daeCapabilities } from './capabilities'
 export enum Core {
   Mihomo = 'mihomo',
   Honk = 'honk',
+  // sing-box 走 Clash 兼容 API 时也属于「Clash 通道上的非 mihomo 内核」
+  Singbox = 'singbox',
   Dae = 'dae',
   Unknown = 'unknown',
 }
@@ -17,7 +19,9 @@ export const resetCore = () => {
 }
 
 const isNonMihomoCore = computed(
-  () => core.value === Core.Honk && activeBackend.value?.type !== 'dae',
+  () =>
+    (core.value === Core.Honk || core.value === Core.Singbox) &&
+    activeBackend.value?.type !== 'dae',
 )
 
 const isForkCoreOverride = computed(() => isNonMihomoCore.value && displayAllFeatures.value)
@@ -35,7 +39,10 @@ export type Cap =
   | 'independentLatency'
   | 'coreUpdateCheck'
   | 'configPatch'
+  | 'modeSwitch'
   | 'traceLogLevel'
+  | 'extraLogLevels'
+  | 'memoryStats'
   | 'silentLogLevel'
   | 'runtimeStats'
   | 'latencyTest'
@@ -71,6 +78,7 @@ type Caps = Partial<Record<Cap, boolean>>
 const clashCaps = computed<Caps>(() => {
   const mihomo = core.value === Core.Mihomo
   const honk = core.value === Core.Honk
+  const singbox = core.value === Core.Singbox
   const mihomoOrForkCore = mihomo || isForkCoreOverride.value
 
   return {
@@ -84,9 +92,17 @@ const clashCaps = computed<Caps>(() => {
     independentLatency: mihomoOrForkCore,
     coreUpdateCheck: mihomo,
     configPatch: mihomo,
+    // sing-box 的 Clash 兼容 API 支持 PATCH /configs 切模式（clash_mode），
+    // 但没有端口 / TUN 这些 mihomo 配置块，所以单独一个开关。
+    modeSwitch: mihomoOrForkCore || singbox,
 
-    traceLogLevel: honk,
+    // trace 与 fatal / panic 级别：sing-box 有，mihomo 没有。
+    traceLogLevel: honk || singbox,
+    extraLogLevels: singbox,
     silentLogLevel: mihomo,
+
+    // 内存占用依赖 Clash WS /memory；sing-box 没有这个流。
+    memoryStats: mihomo || honk || isForkCoreOverride.value,
 
     runtimeStats: honk,
 
@@ -114,6 +130,9 @@ const daeCaps = computed<Caps>(() => {
     traceLogLevel: resources?.logs?.levels?.includes('trace') === true,
 
     runtimeStats: resources?.runtime_outbounds?.available === true,
+
+    modeSwitch: false,
+    memoryStats: true,
 
     latencyTest: resources?.probes?.available === true,
     proxyProviderUpdate: resources?.providers?.can_refresh === true,

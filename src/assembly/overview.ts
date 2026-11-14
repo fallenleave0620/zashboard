@@ -68,31 +68,38 @@ export const initSatistic = () => {
 
   seedHistory()
 
-  const { data: memoryWsData, close: memoryWsClose } = memoryStream()
-  const unwatchMemory = watch(
-    () => memoryWsData.value,
-    (data) => {
-      if (!data) return
-      const timestamp = Date.now().valueOf()
+  let memoryWsClose: (() => void) | undefined
+  let unwatchMemory: (() => void) | undefined
 
-      if (data.inuse === 0) {
-        return
-      }
+  // sing-box 的 Clash 兼容 API 没有 /memory 流，硬订阅只会让 WS 无限重连。
+  if (can('memoryStats')) {
+    const { data: memoryWsData, close } = memoryStream()
+    memoryWsClose = close
+    unwatchMemory = watch(
+      () => memoryWsData.value,
+      (data) => {
+        if (!data) return
+        const timestamp = Date.now().valueOf()
 
-      memory.value = data.inuse
-      memoryHistory.value.push({
-        value: [timestamp, data.inuse],
-        name: timestamp,
-      })
-      connectionsHistory.value.push({
-        value: [timestamp, activeConnections.value.length],
-        name: timestamp,
-      })
+        if (data.inuse === 0) {
+          return
+        }
 
-      memoryHistory.value = memoryHistory.value.slice(-1 * savedPoints)
-      connectionsHistory.value = connectionsHistory.value.slice(-1 * savedPoints)
-    },
-  )
+        memory.value = data.inuse
+        memoryHistory.value.push({
+          value: [timestamp, data.inuse],
+          name: timestamp,
+        })
+        connectionsHistory.value.push({
+          value: [timestamp, activeConnections.value.length],
+          name: timestamp,
+        })
+
+        memoryHistory.value = memoryHistory.value.slice(-1 * savedPoints)
+        connectionsHistory.value = connectionsHistory.value.slice(-1 * savedPoints)
+      },
+    )
+  }
 
   const { data: trafficWsData, close: trafficWsClose } = trafficStream()
   const unwatchTraffic = watch(
@@ -124,9 +131,9 @@ export const initSatistic = () => {
   )
 
   cancel = () => {
-    memoryWsClose()
+    memoryWsClose?.()
     trafficWsClose()
-    unwatchMemory()
+    unwatchMemory?.()
     unwatchTraffic()
   }
 }

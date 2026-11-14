@@ -22,7 +22,8 @@
     "test:mock": "node test/mock-server.mjs",
     "test:setup": "node test/setup.mjs",
     "test:verify": "node test/verify.mjs",
-    "type-check": "vue-tsc --build --force"
+    "type-check": "vue-tsc --build --force",
+    "verify:dist": "node scripts/verify-dist.mjs dist"
   },
   "dependencies": {
     "@eslint/plugin-kit": "^0.7.2",
