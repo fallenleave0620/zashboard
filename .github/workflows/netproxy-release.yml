@@ -1,0 +1,94 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [ netproxy/singbox-clash-compat ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '发布用的 tag（留空 = netproxy-latest 滚动发布）'
+        required: false
+        default: netproxy-latest
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.20.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          # Vite 8 需要 Node 20.19+ / 22.12+
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          HUSKY: 0
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (无内嵌字体，与 NetProxy 模块内的 webroot 一致)
+        run: pnpm run build:no-fonts
+
+      - name: Verify dist
+        run: pnpm run verify:dist
+
+      - name: Package
+        id: pack
+        run: |
+          set -euo pipefail
+          NAME="zashboard-netproxy-${GITHUB_SHA::8}.zip"
+          ( cd dist && zip -qr "../$NAME" . )
+          sha256sum "$NAME" > "$NAME.sha256"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          ls -lh "$NAME" "$NAME.sha256"
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=netproxy-latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: zashboard-${{ steps.pack.outputs.name }}
+          path: |
+            ${{ steps.pack.outputs.name }}
+            ${{ steps.pack.outputs.name }}.sha256
+          if-no-files-found: error
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Zashboard · NetProxy ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ steps.tag.outputs.tag == 'netproxy-latest' }}
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: |
+            ${{ steps.pack.outputs.name }}
+            ${{ steps.pack.outputs.name }}.sha256
+          body: |
+            sing-box Clash API 兼容 + KSU WebUI 安全区的 NetProxy 构建 · commit ${{ github.sha }}
+
+            - 产物：${{ steps.pack.outputs.name }}（解压后是 `dist/` 内容，可直接替换模块 `webroot/zashboard/`）
+            - 字体：`FONT=none`（无内嵌字体，体积最小）
+            - 验收：`pnpm run verify:dist` 已在 CI 里跑过
