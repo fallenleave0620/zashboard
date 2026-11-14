@@ -2,7 +2,7 @@ name: Build & Release
 
 on:
   push:
-    branches: [ netproxy/singbox-clash-compat ]
+    branches: [ feat/singbox-clash-compat ]
   workflow_dispatch:
     inputs:
       tag:
