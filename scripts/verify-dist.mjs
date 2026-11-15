@@ -96,12 +96,13 @@ const cssMarkers = [
   ['安全区底部 padding', 'padding-bottom:var(--np-safe-bottom'],
   // 概览页的设置按钮是 absolute 定位在 CtrlsBar 里的，必须自己加安全区偏移，
   // 否则会钻到状态栏下面（KSU WebUI 是 edge-to-edge）。
-  ['设置按钮安全区 top', 'calc(.5rem + var(--np-safe-top'],
-  ['设置按钮安全区 right', 'calc(.5rem + var(--np-safe-right'],
+  ['设置按钮安全区 top', /(?:^|[;{])\s*top\s*:\s*calc\(\s*0?\.5rem\s*\+\s*var\(\s*--np-safe-top\s*[,)]/],
+  ['设置按钮安全区 right', /(?:^|[;{])\s*right\s*:\s*calc\(\s*0?\.5rem\s*\+\s*var\(\s*--np-safe-right\s*[,)]/],
 ]
 
 for (const [label, marker] of cssMarkers) {
-  if (!css.includes(marker)) fail(`CSS 缺少 ${label}（${marker}）`)
+  const ok = marker instanceof RegExp ? marker.test(css) : css.includes(marker)
+  if (!ok) fail(`CSS 缺少 ${label}（${marker}）`)
 }
 if (css.includes('@import')) {
   fail('CSS 里仍有未处理的 @import（Vite 应内联；常见原因是 @import 被规则挤到后面而失效）')
